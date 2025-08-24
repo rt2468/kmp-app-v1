@@ -35,29 +35,18 @@ jobs:
       - name: Grant execute permission to Gradle
         run: chmod +x ./gradlew
 
-  test:
-    name: Run Tests
-    runs-on: ubuntu-latest
-    needs: setup
-    steps:
-      - uses: actions/checkout@v4
-      - name: Grant execute permission to Gradle
-        run: chmod +x ./gradlew
-
-      - name: Run Unit Tests
-        run: ./gradlew allTests
 
   build:
     name: Build KMP Targets
     runs-on: ubuntu-latest
-    needs: [setup, test]
+    needs: [setup]
     steps:
       - uses: actions/checkout@v4
       - name: Grant execute permission to Gradle
         run: chmod +x ./gradlew
         
       - name: Build Android App
-        run: ./gradlew :androidApp:assembleDebug
+        run: ./gradlew :composeApp:assembleDebug
 
       - name: Build KMP Library
         run: ./gradlew build
