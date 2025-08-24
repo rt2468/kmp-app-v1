@@ -41,6 +41,8 @@ jobs:
     needs: setup
     steps:
       - uses: actions/checkout@v4
+      - name: Grant execute permission to Gradle
+        run: chmod +x ./gradlew
 
       - name: Run Unit Tests
         run: ./gradlew allTests
@@ -51,7 +53,9 @@ jobs:
     needs: [setup, test]
     steps:
       - uses: actions/checkout@v4
-
+      - name: Grant execute permission to Gradle
+        run: chmod +x ./gradlew
+        
       - name: Build Android App
         run: ./gradlew :androidApp:assembleDebug
 
