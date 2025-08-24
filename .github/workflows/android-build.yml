@@ -1,0 +1,26 @@
+name: Build Android app
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Build
+    runs-on: macOS-latest
+    # Only run build in template repo
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: 21
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+      - name: Android debug build
+        run: ./gradlew assembleDebug --stacktrace
