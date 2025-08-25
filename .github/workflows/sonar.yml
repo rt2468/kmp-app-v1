@@ -4,6 +4,7 @@ on:
     branches: [ main, kmp_with_analyze_tools ]
   pull_request:
     types: [ opened, synchronize, reopened ]
+  workflow_dispatch:
 jobs:
   sonar:
     runs-on: ubuntu-latest
