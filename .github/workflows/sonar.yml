@@ -33,7 +33,7 @@ jobs:
           restore-keys: ${{ runner.os }}-gradle
 #      - name: Generate Kover reports
 #        run: ./gradlew koverXmlReport
-#      - name: Run SonarCloud Analysis
+      - name: Run SonarCloud Analysis
         run: |
           ./gradlew sonar \
             -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }} \
