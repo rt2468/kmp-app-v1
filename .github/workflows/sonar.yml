@@ -1,4 +1,4 @@
-name: SonarCloud Analysis Medium
+name: SonarCloud Analysis Medium1
 on:
   push:
     branches: [ main, kmp_with_analyze_tools ]
@@ -31,8 +31,6 @@ jobs:
           path: ~/.gradle/caches
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: ${{ runner.os }}-gradle
-#      - name: Generate Kover reports
-#        run: ./gradlew koverXmlReport
       - name: Run SonarCloud Analysis
         run: |
           ./gradlew sonar \
