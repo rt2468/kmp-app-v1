@@ -16,14 +16,44 @@ sonarqube {
         property("sonar.organization", "kmp-sq")
         property("sonar.host.url", "https://sonarcloud.io")
         
-        // Source directories
-        property("sonar.sources", "composeApp/src/main,shared/src/commonMain")
-        property("sonar.tests", "composeApp/src/test,shared/src/commonTest")
+        // Use arrays instead of comma-separated strings to avoid casting issues
+        property("sonar.sources", listOf(
+            "composeApp/src/commonMain",
+            "composeApp/src/androidMain", 
+            "shared/src/commonMain",
+            "shared/src/androidMain"
+        ))
         
-        // Kotlin-specific settings
+        property("sonar.tests", listOf(
+            "composeApp/src/commonTest",
+            "composeApp/src/androidTest",
+            "shared/src/commonTest",
+            "shared/src/androidTest"
+        ))
+        
+        // Language settings
         property("sonar.kotlin.source.version", "1.9")
+        property("sonar.java.source", "17")
+        property("sonar.java.target", "17")
         
-        // Exclude build directories
-        property("sonar.exclusions", "**/build/**")
+        // Exclusions
+        property("sonar.exclusions", listOf(
+            "**/build/**",
+            "**/generated/**",
+            "**/*.pb.kt",
+            "**/R.java",
+            "**/BuildConfig.java"
+        ))
+        
+        // Coverage exclusions
+        property("sonar.coverage.exclusions", listOf(
+            "**/test/**",
+            "**/androidTest/**",
+            "**/*Test*/**"
+        ))
+        
+        // Disable problematic rules that don't work well with KMP
+        property("sonar.kotlin.gradlePluginPackaging.enabled", "false")
+        property("sonar.kotlin.detekt.reportPaths", "")
     }
 }
