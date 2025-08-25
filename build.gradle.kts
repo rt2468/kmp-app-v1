@@ -16,19 +16,15 @@ sonarqube {
         property("sonar.organization", "kmp-sq")
         property("sonar.host.url", "https://sonarcloud.io")
         
-        // Use arrays instead of comma-separated strings to avoid casting issues
+        // Configure source directories more precisely to avoid overlaps
         property("sonar.sources", listOf(
-            "composeApp/src/commonMain",
-            "composeApp/src/androidMain", 
-            "shared/src/commonMain",
-            "shared/src/androidMain"
+            "shared/src/commonMain/kotlin",
+            "composeApp/src/commonMain/kotlin"
         ))
         
         property("sonar.tests", listOf(
-            "composeApp/src/commonTest",
-            "composeApp/src/androidTest",
-            "shared/src/commonTest",
-            "shared/src/androidTest"
+            "shared/src/commonTest/kotlin",
+            "composeApp/src/commonTest/kotlin"
         ))
         
         // Language settings
@@ -36,20 +32,26 @@ sonarqube {
         property("sonar.java.source", "17")
         property("sonar.java.target", "17")
         
-        // Exclusions
+        // Exclusions - be more specific to avoid conflicts
         property("sonar.exclusions", listOf(
             "**/build/**",
             "**/generated/**",
             "**/*.pb.kt",
             "**/R.java",
-            "**/BuildConfig.java"
+            "**/BuildConfig.java",
+            "**/src/androidMain/**", // Exclude Android-specific source sets
+            "**/src/iosMain/**",     // Exclude iOS-specific source sets
+            "**/src/desktopMain/**"  // Exclude Desktop-specific source sets
         ))
         
         // Coverage exclusions
         property("sonar.coverage.exclusions", listOf(
             "**/test/**",
             "**/androidTest/**",
-            "**/*Test*/**"
+            "**/*Test*/**",
+            "**/src/androidMain/**",
+            "**/src/iosMain/**",
+            "**/src/desktopMain/**"
         ))
         
         // Disable problematic rules that don't work well with KMP
