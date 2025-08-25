@@ -2,7 +2,7 @@ name: SonarCloud Analysis with Lint and Test
 
 on:
   push:
-    branches: [ main,master, kmp_with_analyze_tools ]
+    branches: [ main, kmp_with_analyze_tools ]
   pull_request:
     types: [ opened, synchronize, reopened ]
   workflow_dispatch:
@@ -147,35 +147,26 @@ jobs:
 
       - run: chmod +x ./gradlew
 
-      - name: Cache SonarQube packages
-        uses: actions/cache@v3
-        with:
-          path: ~/.sonar/cache
-          key: ${{ runner.os }}-sonar
-          restore-keys: |
-            ${{ runner.os }}-sonar
-
       - name: Download Test & Coverage Reports
         uses: actions/download-artifact@v4
         with:
           name: test-reports
           path: .
 
-      # If you generate coverage (e.g., JaCoCo), make sure sonarqube sees the paths.
-      # Prefer a sonar-project.properties in repo; CLI flags below are kept minimal.
+      # Run Sonar analysis using Gradle plugin (recommended approach)
       - name: Run SonarCloud Analysis
         run: |
           ./gradlew sonar --no-daemon \
             -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }} \
             -Dsonar.organization=${{ secrets.SONAR_ORG }} \
-            -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }}
+            -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }} \
+            -Dsonar.login=${{ secrets.SONAR_TOKEN }}
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
-      # Optional: Fail the job if the Quality Gate fails (good for PRs)
-      - name: SonarCloud Quality Gate
-        uses: SonarSource/sonarcloud-github-action@master
-        with:
-          projectKey: ${{ secrets.SONAR_PROJECT_KEY }}
-          organization: ${{ secrets.SONAR_ORG }}
-          token: ${{ secrets.SONAR_TOKEN }}
+      # Optional: Wait for Quality Gate using the newer action
+      - name: SonarCloud Quality Gate Check
+        uses: SonarSource/sonarqube-quality-gate-action@v1.1.0
+        timeout-minutes: 5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
