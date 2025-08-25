@@ -41,7 +41,7 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Build and run tests
-        run: ./gradlew clean build -x lint --no-daemon
+        run: ./gradlew clean build -x lint --no-daemon --no-build-cache
 
       - name: SonarQube analysis
         run: ./gradlew sonar -Dsonar.token=${{ secrets.SONAR_TOKEN }}
