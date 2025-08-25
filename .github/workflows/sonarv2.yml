@@ -44,5 +44,4 @@ jobs:
         run: ./gradlew clean build -x lint --no-daemon
 
       - name: SonarQube analysis
-        run: ./gradlew sonarqube \
-          -Dsonar.login=${{ secrets.SONAR_TOKEN }}
+        run: ./gradlew sonarqube -Dsonar.login=${{ secrets.SONAR_TOKEN }}
