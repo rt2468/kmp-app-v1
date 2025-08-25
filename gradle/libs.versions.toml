@@ -14,6 +14,7 @@ junit = "4.13.2"
 kotlin = "2.2.0"
 #ktlint = "12.1.0"
 sonarqube = "6.1.0.5360"
+kover = "0.9.1"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -37,3 +38,5 @@ kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref =
 #ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint" }
 #sonarqube = { id = "org.sonarqube", version = "4.4.1.3373" } # Latest stable
 sonarqube = { id = "org.sonarqube", version.ref = "sonarqube" }
+kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }
+
