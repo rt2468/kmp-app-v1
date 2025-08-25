@@ -1,9 +1,10 @@
-name: SonarCloud Analysis
+name: SonarCloud Analysis Medium1
 on:
   push:
     branches: [ main, kmp_with_analyze_tools ]
   pull_request:
     types: [ opened, synchronize, reopened ]
+  workflow_dispatch:
 jobs:
   sonar:
     runs-on: ubuntu-latest
@@ -15,6 +16,9 @@ jobs:
         uses: actions/setup-java@v3
         with:
           java-version: 17
+          distribution: 'temurin'
+      - name: Make gradlew executable  # Add this step
+        run: chmod +x ./gradlew
       - name: Cache SonarQube packages
         uses: actions/cache@v3
         with:
@@ -27,8 +31,6 @@ jobs:
           path: ~/.gradle/caches
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: ${{ runner.os }}-gradle
-      - name: Generate Kover reports
-        run: ./gradlew koverXmlReport
       - name: Run SonarCloud Analysis
         run: |
           ./gradlew sonar \
