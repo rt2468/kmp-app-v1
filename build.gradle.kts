@@ -28,6 +28,18 @@ sonarqube {
         // Encoding and exclusions
         property("sonar.sourceEncoding", "UTF-8")
         property("sonar.exclusions", "**/build/**,**/*.gradle.kts")
+
+        property("sonar.language", "kotlin")
+        property("sonar.sourceEncoding", "UTF-8")
+
+        // ✅ Sources (main code only)
+        property("sonar.sources", "composeApp/src/androidMain/kotlin,shared/src/commonMain/kotlin")
+
+        // ✅ Tests (test code only)
+        property("sonar.tests", "composeApp/src/androidUnitTest/kotlin,shared/src/commonTest/kotlin")
+
+        // ✅ Exclude build and gradle
+        property("sonar.exclusions", "**/build/**,**/*.gradle.kts")
       
     }
 }
