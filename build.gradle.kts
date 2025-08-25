@@ -18,10 +18,14 @@ sonarqube {
         property("sonar.language", "kotlin")
         property("sonar.sourceEncoding", "UTF-8")
 
+        // Fix: Use more specific paths to avoid overlaps
+        property("sonar.sources", "composeApp/src/commonMain/kotlin,shared/src/commonMain/kotlin")
+        property("sonar.tests", "composeApp/src/commonTest/kotlin,shared/src/commonTest/kotlin")
 
-        property("sonar.sources", "composeApp/src/androidMain/kotlin,shared/src/commonMain/kotlin")
-        property("sonar.tests", "composeApp/src/androidUnitTest/kotlin,shared/src/commonTest/kotlin")
+        // Alternative approach - exclude androidMain specifically if you want to include it
+        // property("sonar.sources", "composeApp/src,shared/src")
+        // property("sonar.exclusions", "**/build/**,**/*.gradle.kts,**/androidTest/**")
+
         property("sonar.exclusions", "**/build/**,**/*.gradle.kts")
-
     }
 }
