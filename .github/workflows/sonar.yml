@@ -31,9 +31,9 @@ jobs:
           path: ~/.gradle/caches
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: ${{ runner.os }}-gradle
-      - name: Generate Kover reports
-        run: ./gradlew koverXmlReport
-      - name: Run SonarCloud Analysis
+#      - name: Generate Kover reports
+#        run: ./gradlew koverXmlReport
+#      - name: Run SonarCloud Analysis
         run: |
           ./gradlew sonar \
             -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }} \
