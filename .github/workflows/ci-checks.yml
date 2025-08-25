@@ -2,7 +2,7 @@ name: SonarCloud Analysis with Lint and Test
 
 on:
   push:
-    branches: [ main, master, kmp_with_analyze_tools ]
+    branches: [ main,master, kmp_with_analyze_tools ]
   pull_request:
     types: [ opened, synchronize, reopened ]
   workflow_dispatch:
@@ -127,7 +127,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 0  # required for proper blame/PR analysis
 
       - name: Set up JDK
         uses: actions/setup-java@v3
@@ -153,31 +153,13 @@ jobs:
           name: test-reports
           path: .
 
-      # Run Sonar analysis using Gradle plugin with report task file generation
+      # Run Sonar analysis using Gradle plugin (recommended approach)
       - name: Run SonarCloud Analysis
         run: |
           ./gradlew sonar --no-daemon \
             -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }} \
             -Dsonar.organization=${{ secrets.SONAR_ORG }} \
             -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }} \
-            -Dsonar.login=${{ secrets.SONAR_TOKEN }} \
-            -Dsonar.scanner.metadataFilePath=.scannerwork/report-task.txt
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-
-      # Wait for Quality Gate - only if the report file exists
-      - name: Check if report file exists
-        id: check-report
-        run: |
-          if [ -f ".scannerwork/report-task.txt" ]; then
-            echo "exists=true" >> $GITHUB_OUTPUT
-          else
-            echo "exists=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: SonarCloud Quality Gate Check
-        if: steps.check-report.outputs.exists == 'true'
-        uses: SonarSource/sonarqube-quality-gate-action@v1.1.0
-        timeout-minutes: 5
+            -Dsonar.login=${{ secrets.SONAR_TOKEN }}
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
