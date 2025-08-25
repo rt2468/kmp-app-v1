@@ -18,23 +18,11 @@ sonarqube {
         property("sonar.language", "kotlin")
         property("sonar.sourceEncoding", "UTF-8")
 
-        // ✅ Sources (Main only)
-        property(
-            "sonar.sources",
-            "composeApp/src/androidMain/kotlin,shared/src/commonMain/kotlin"
-        )
 
-        // ✅ Tests (ONLY test folders)
-        property(
-            "sonar.tests",
-            "composeApp/src/androidUnitTest/kotlin,shared/src/commonTest/kotlin"
-        )
+        property("sonar.sources", "composeApp/src/androidMain/kotlin/,shared/src/commonMain/kotlin/")
+        //property("sonar.tests", "composeApp/src/androidUnitTest/kotlin/,shared/src/commonTest/kotlin/")
+        property("sonar.exclusions", "**/build/**,**/*.gradle.kts")
 
-        // ✅ Exclude test folders from sources
-        property(
-            "sonar.exclusions",
-            "composeApp/src/androidUnitTest/**,shared/src/commonTest/**,**/build/**,**/*.gradle.kts"
-        )
     }
 }
 
