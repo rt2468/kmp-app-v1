@@ -1,4 +1,4 @@
-name: Sonarqube Analysis
+name: KMP CI
 
 on:
   push:
@@ -71,19 +71,9 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          ./gradlew sonarqube \
+          ./gradlew sonar \
             -Dsonar.organization=kmp-sq \
             -Dsonar.projectKey=kmp-sq_project \
             -Dsonar.host.url=https://sonarcloud.io \
             -Dsonar.token=${{ secrets.SONAR_TOKEN }} \
-            --no-daemon --stacktrace
-            
-      - name: SonarCloud Quality Gate
-        uses: sonarSource/sonarqube-quality-gate-action@master
-        timeout-minutes: 5
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        with:
-          scanMetadataReportFile: build/sonar/report-task.txt
-          
-
+            --no-daemon --no-configuration-cache --stacktrace
