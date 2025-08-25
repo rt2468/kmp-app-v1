@@ -19,8 +19,8 @@ sonarqube {
         property("sonar.sourceEncoding", "UTF-8")
 
 
-        property("sonar.sources", "composeApp/src/androidMain/kotlin/,shared/src/commonMain/kotlin/")
-        //property("sonar.tests", "composeApp/src/androidUnitTest/kotlin/,shared/src/commonTest/kotlin/")
+        property("sonar.sources", "composeApp/src/androidMain/kotlin,shared/src/commonMain/kotlin")
+        property("sonar.tests", "composeApp/src/androidUnitTest/kotlin,shared/src/commonTest/kotlin")
         property("sonar.exclusions", "**/build/**,**/*.gradle.kts")
 
     }
