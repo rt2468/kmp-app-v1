@@ -135,30 +135,48 @@ jobs:
           java-version: ${{ env.JAVA_VERSION }}
           distribution: temurin
 
+      - name: Restore Gradle Cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle
+
+      - run: chmod +x ./gradlew
+
       - name: Download Test & Coverage Reports
         uses: actions/download-artifact@v4
         with:
           name: test-reports
           path: .
 
-      # Use standalone SonarScanner
-      - name: SonarCloud Scan
-        uses: SonarSource/sonarqube-scan-action@v5.0.0
+      # Run Sonar analysis using Gradle plugin with report task file generation
+      - name: Run SonarCloud Analysis
+        run: |
+          ./gradlew sonar --no-daemon \
+            -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }} \
+            -Dsonar.organization=${{ secrets.SONAR_ORG }} \
+            -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }} \
+            -Dsonar.login=${{ secrets.SONAR_TOKEN }} \
+            -Dsonar.scanner.metadataFilePath=.scannerwork/report-task.txt
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-        with:
-          args: >
-            -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
-            -Dsonar.organization=${{ secrets.SONAR_ORG }}
-            -Dsonar.sources=src
-            -Dsonar.java.binaries=build/classes
-            -Dsonar.coverage.jacoco.xmlReportPaths=build/reports/jacoco/test/jacocoTestReport.xml
-            -Dsonar.junit.reportPaths=build/test-results/test
-            -Dsonar.scm.provider=git
 
-      # Quality Gate check (will work now since standalone scanner generates the file)
+      # Wait for Quality Gate - only if the report file exists
+      - name: Check if report file exists
+        id: check-report
+        run: |
+          if [ -f ".scannerwork/report-task.txt" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: SonarCloud Quality Gate Check
+        if: steps.check-report.outputs.exists == 'true'
         uses: SonarSource/sonarqube-quality-gate-action@v1.1.0
         timeout-minutes: 5
         env:
