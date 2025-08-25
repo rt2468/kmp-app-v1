@@ -75,7 +75,7 @@ jobs:
   sonar:
     name: SonarCloud Analysis
     runs-on: ubuntu-latest
-    needs: [setup, test]  # Wait for test to complete to ensure reports are available
+    needs: [setup, lint, test]  # Wait for test to complete to ensure reports are available
     steps:
       - uses: actions/checkout@v4
         with:
