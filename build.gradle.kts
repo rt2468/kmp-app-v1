@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.kotlinMultiplatform) apply false
     alias(libs.plugins.sonarqube) // Important: do not use apply false!
     alias(libs.plugins.kover)
+    alias(libs.plugins.ktlint)
 }
 
 //sonarqube {
