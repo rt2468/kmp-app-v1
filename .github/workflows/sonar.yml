@@ -1,4 +1,4 @@
-name: SonarCloud Analysis
+name: SonarCloud Analysis Medium
 on:
   push:
     branches: [ main, kmp_with_analyze_tools ]
