@@ -4,7 +4,6 @@ plugins {
     alias(libs.plugins.composeMultiplatform) apply false
     alias(libs.plugins.composeCompiler) apply false
     alias(libs.plugins.kotlinMultiplatform) apply false
-    //alias(libs.plugins.ktlint) apply false
     alias(libs.plugins.sonarqube) apply true
 }
 
@@ -19,13 +18,13 @@ sonarqube {
         property("sonar.language", "kotlin")
         property("sonar.sourceEncoding", "UTF-8")
 
-        // ✅ Only main source directories (no tests here)
+        // ✅ Only main source directories
         property(
             "sonar.sources",
             "composeApp/src/androidMain/kotlin,shared/src/commonMain/kotlin"
         )
 
-        // ✅ Only test directories (non-overlapping)
+        // ✅ Only test directories
         property(
             "sonar.tests",
             "composeApp/src/androidUnitTest/kotlin,shared/src/commonTest/kotlin"
