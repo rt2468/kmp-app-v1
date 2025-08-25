@@ -2,10 +2,20 @@ name: SonarCloud Analysis with Lint and Test
 
 on:
   push:
-    branches: [ main, kmp_with_analyze_tools ]
+    branches: [ main,master, kmp_with_analyze_tools ]
   pull_request:
     types: [ opened, synchronize, reopened ]
   workflow_dispatch:
+
+# Optional but recommended: avoid duplicate concurrent runs on the same ref
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Least-privilege defaults; Sonar PR decoration typically uses the SonarCloud app
+permissions:
+  contents: read
+  pull-requests: write
 
 defaults:
   run:
@@ -13,7 +23,6 @@ defaults:
 
 env:
   JAVA_VERSION: 17
-  GRADLE_CACHE_KEY: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
 
 jobs:
   setup:
@@ -23,20 +32,24 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
       - name: Set up JDK
         uses: actions/setup-java@v3
         with:
           java-version: ${{ env.JAVA_VERSION }}
           distribution: temurin
+
       - name: Make gradlew executable
         run: chmod +x ./gradlew
-      - name: Cache Gradle (Build + Wrapper)
+
+      # Prime Gradle caches once so later jobs restore quickly
+      - name: Cache Gradle (caches + wrapper)
         uses: actions/cache@v3
         with:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: ${{ env.GRADLE_CACHE_KEY }}
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle/wrapper/gradle-wrapper.properties') }}
           restore-keys: |
             ${{ runner.os }}-gradle
 
@@ -46,21 +59,27 @@ jobs:
     needs: setup
     steps:
       - uses: actions/checkout@v4
+
       - name: Set up JDK
         uses: actions/setup-java@v3
         with:
           java-version: ${{ env.JAVA_VERSION }}
           distribution: temurin
+
       - name: Restore Gradle Cache
         uses: actions/cache@v3
         with:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: ${{ env.GRADLE_CACHE_KEY }}
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle
+
       - run: chmod +x ./gradlew
+
       - name: Run KtLint
-        run: ./gradlew ktlintCheck
+        run: ./gradlew ktlintCheck --no-daemon
 
   test:
     name: Run Unit Tests
@@ -68,26 +87,38 @@ jobs:
     needs: setup
     steps:
       - uses: actions/checkout@v4
+
       - name: Set up JDK
         uses: actions/setup-java@v3
         with:
           java-version: ${{ env.JAVA_VERSION }}
           distribution: temurin
+
       - name: Restore Gradle Cache
         uses: actions/cache@v3
         with:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: ${{ env.GRADLE_CACHE_KEY }}
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle
+
       - run: chmod +x ./gradlew
+
       - name: Run Unit Tests
-        run: ./gradlew allTests
-      - name: Upload Test Reports
+        run: ./gradlew allTests --no-daemon
+
+      # Make reports available to the sonar job (multi-module friendly)
+      - name: Upload Test & Coverage Reports
         uses: actions/upload-artifact@v4
         with:
           name: test-reports
-          path: build/reports
+          if-no-files-found: warn
+          path: |
+            **/build/test-results/**
+            **/build/reports/**
+            **/build/jacoco/**
 
   sonar:
     name: SonarCloud Analysis
@@ -96,40 +127,52 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 0  # required for proper blame/PR analysis
+
       - name: Set up JDK
         uses: actions/setup-java@v3
         with:
           java-version: ${{ env.JAVA_VERSION }}
           distribution: temurin
+
       - name: Restore Gradle Cache
         uses: actions/cache@v3
         with:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: ${{ env.GRADLE_CACHE_KEY }}
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle
+
       - run: chmod +x ./gradlew
+
       - name: Cache SonarQube packages
         uses: actions/cache@v3
         with:
           path: ~/.sonar/cache
           key: ${{ runner.os }}-sonar
-      - name: Download Test Reports
+          restore-keys: |
+            ${{ runner.os }}-sonar
+
+      - name: Download Test & Coverage Reports
         uses: actions/download-artifact@v4
         with:
           name: test-reports
-          path: build/reports
+          path: .
+
+      # If you generate coverage (e.g., JaCoCo), make sure sonarqube sees the paths.
+      # Prefer a sonar-project.properties in repo; CLI flags below are kept minimal.
       - name: Run SonarCloud Analysis
         run: |
-          ./gradlew sonar \
+          ./gradlew sonar --no-daemon \
             -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }} \
             -Dsonar.organization=${{ secrets.SONAR_ORG }} \
             -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }}
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
-      # Optional: Wait for Quality Gate and fail if it fails
+      # Optional: Fail the job if the Quality Gate fails (good for PRs)
       - name: SonarCloud Quality Gate
         uses: SonarSource/sonarcloud-github-action@master
         with:
