@@ -1,4 +1,4 @@
-name: KMP CI
+name: Sonarqube Analysis
 
 on:
   push:
@@ -79,9 +79,11 @@ jobs:
             --no-daemon --stacktrace
             
       - name: SonarCloud Quality Gate
-        uses: SonarSource/sonarqube-quality-gate-action@v1.3.0
+        uses: sonarSource/sonarqube-quality-gate-action@master
         timeout-minutes: 5
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
           scanMetadataReportFile: build/sonar/report-task.txt
+          
+
