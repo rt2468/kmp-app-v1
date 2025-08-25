@@ -120,53 +120,46 @@ jobs:
             **/build/reports/**
             **/build/jacoco/**
 
-  sonar:
-    name: SonarCloud Analysis
-    runs-on: ubuntu-latest
-    needs: [lint, test]
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0  # required for proper blame/PR analysis
+sonar:
+  name: SonarCloud Analysis
+  runs-on: ubuntu-latest
+  needs: [lint, test]
+  steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
 
-      - name: Set up JDK
-        uses: actions/setup-java@v3
-        with:
-          java-version: ${{ env.JAVA_VERSION }}
-          distribution: temurin
+    - name: Set up JDK
+      uses: actions/setup-java@v3
+      with:
+        java-version: ${{ env.JAVA_VERSION }}
+        distribution: temurin
 
-      - name: Restore Gradle Cache
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle/wrapper/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle
+    - name: Download Test & Coverage Reports
+      uses: actions/download-artifact@v4
+      with:
+        name: test-reports
+        path: .
 
-      - run: chmod +x ./gradlew
+    # Use standalone SonarScanner
+    - name: SonarCloud Scan
+      uses: SonarSource/sonarqube-scan-action@v5.0.0
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+      with:
+        args: >
+          -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
+          -Dsonar.organization=${{ secrets.SONAR_ORG }}
+          -Dsonar.sources=src
+          -Dsonar.java.binaries=build/classes
+          -Dsonar.coverage.jacoco.xmlReportPaths=build/reports/jacoco/test/jacocoTestReport.xml
+          -Dsonar.junit.reportPaths=build/test-results/test
+          -Dsonar.scm.provider=git
 
-      - name: Download Test & Coverage Reports
-        uses: actions/download-artifact@v4
-        with:
-          name: test-reports
-          path: .
-
-      # Run Sonar analysis using Gradle plugin (recommended approach)
-      - name: Run SonarCloud Analysis
-        run: |
-          ./gradlew sonar --no-daemon \
-            -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }} \
-            -Dsonar.organization=${{ secrets.SONAR_ORG }} \
-            -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }} \
-            -Dsonar.login=${{ secrets.SONAR_TOKEN }}
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-
-      # Optional: Wait for Quality Gate using the newer action
-      - name: SonarCloud Quality Gate Check
-        uses: SonarSource/sonarqube-quality-gate-action@v1.1.0
-        timeout-minutes: 5
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+    # Quality Gate check (will work now since standalone scanner generates the file)
+    - name: SonarCloud Quality Gate Check
+      uses: SonarSource/sonarqube-quality-gate-action@v1.1.0
+      timeout-minutes: 5
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
