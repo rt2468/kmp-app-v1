@@ -1,4 +1,4 @@
-name: Lint, Test, SQ-2
+name: Lint, Test, SQ-10
 
 on:
   push:
@@ -163,6 +163,24 @@ jobs:
           path: build/jacoco
         continue-on-error: true
 
+      - name: Check Test Results
+        id: test-results
+        run: |
+          if [ -s build/test-results/test ]; then
+            echo "test-arg=-Dsonar.junit.reportPaths=build/test-results/test" >> $GITHUB_OUTPUT
+          else
+            echo "test-arg=" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check Coverage Reports
+        id: coverage
+        run: |
+          if [ -s build/jacoco/test.exec ]; then
+            echo "coverage-arg=-Dsonar.jacoco.reportPaths=build/jacoco/test.exec" >> $GITHUB_OUTPUT
+          else
+            echo "coverage-arg=" >> $GITHUB_OUTPUT
+          fi
+
       - name: Run SonarCloud Analysis
         uses: gradle/gradle-build-action@v2
         env:
@@ -174,5 +192,5 @@ jobs:
             -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
             -Dsonar.organization=${{ secrets.SONAR_ORG }}
             -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }}
-            $( [ -d build/test-results ] && echo "-Dsonar.junit.reportPaths=build/test-results/test" )
-            $( [ -d build/jacoco ] && echo "-Dsonar.jacoco.reportPaths=build/jacoco/test.exec" )
+            ${{ steps.test-results.outputs.test-arg }}
+            ${{ steps.coverage.outputs.coverage-arg }}
