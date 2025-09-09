@@ -97,6 +97,9 @@ jobs:
         with:
           gradle-home-cache-cleanup: true
 
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
       - name: Download Test & Coverage Reports
         uses: actions/download-artifact@v4
         with:
