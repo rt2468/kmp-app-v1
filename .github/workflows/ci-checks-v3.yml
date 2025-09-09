@@ -1,4 +1,4 @@
-name: Lint, Test, SQ-2
+name: Lint, Test, SQ-4
 
 on:
   push:
@@ -167,17 +167,37 @@ jobs:
           distribution: temurin
           cache: gradle
 
-      - name: Download Test Reports
+      - name: Download Test Reports (if available)
         uses: actions/download-artifact@v4
+        continue-on-error: true
         with:
           name: test-reports
           path: build/test-results
 
-      - name: Download Coverage Reports
+      - name: Download Coverage Reports (if available)
         uses: actions/download-artifact@v4
+        continue-on-error: true
         with:
           name: coverage-reports
           path: build/jacoco
+
+      - name: Check if test results exist
+        id: check-test-results
+        run: |
+          if [ -d "build/test-results" ] && [ "$(ls -A build/test-results)" ]; then
+            echo "test-results-exist=true" >> $GITHUB_OUTPUT
+          else
+            echo "test-results-exist=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check if coverage reports exist
+        id: check-coverage-reports
+        run: |
+          if [ -d "build/jacoco" ] && [ "$(ls -A build/jacoco)" ]; then
+            echo "coverage-reports-exist=true" >> $GITHUB_OUTPUT
+          else
+            echo "coverage-reports-exist=false" >> $GITHUB_OUTPUT
+          fi
 
       - name: Run SonarCloud Analysis
         uses: gradle/gradle-build-action@v2
@@ -190,5 +210,5 @@ jobs:
             -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
             -Dsonar.organization=${{ secrets.SONAR_ORG }}
             -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }}
-            -Dsonar.junit.reportPaths=build/test-results/test
-            -Dsonar.jacoco.reportPaths=build/jacoco/test.exec
+            ${{ steps.check-test-results.outputs.test-results-exist == 'true' && '-Dsonar.junit.reportPaths=build/test-results/test' || '' }}
+            ${{ steps.check-coverage-reports.outputs.coverage-reports-exist == 'true' && '-Dsonar.jacoco.reportPaths=build/jacoco/test.exec' || '' }}
