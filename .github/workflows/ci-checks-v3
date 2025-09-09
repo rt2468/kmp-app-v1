@@ -1,0 +1,185 @@
+name: Lint, Test, SQ-2
+
+on:
+  push:
+    branches: [main, master, kmp_with_analyze_tools]
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  JAVA_VERSION: '17'
+  GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.configureondemand=true -Dorg.gradle.caching=true
+  GRADLE_BUILD_CACHE: true
+  GRADLE_BUILD_CACHE_DEBUG: false
+
+jobs:
+  setup:
+    name: Setup Environment
+    runs-on: ubuntu-latest
+    outputs:
+      cache-key: ${{ steps.gradle-cache.outputs.cache-key }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: temurin
+          cache: gradle
+
+      - name: Generate Gradle cache key
+        id: gradle-cache
+        run: echo "cache-key=$(./gradlew --version | sha256sum | cut -d' ' -f1)" >> $GITHUB_OUTPUT
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ steps.gradle-cache.outputs.cache-key }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+  lint:
+    name: Run KtLint
+    runs-on: ubuntu-latest
+    needs: setup
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: temurin
+          cache: gradle
+
+      - name: Restore Gradle cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ needs.setup.outputs.cache-key }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Run KtLint with Gradle caching
+        uses: gradle/gradle-build-action@v2
+        with:
+          arguments: ktlintCheck
+          cache-read-only: ${{ github.ref != 'refs/heads/main' && github.ref != 'refs/heads/master' && github.ref != 'refs/heads/kmp_with_analyze_tools' }}
+
+  test:
+    name: Run Unit Tests
+    runs-on: ubuntu-latest
+    needs: setup
+    timeout-minutes: 30
+    strategy:
+      matrix:
+        test-type: [unit, integration]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: temurin
+          cache: gradle
+
+      - name: Restore Gradle cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ needs.setup.outputs.cache-key }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Run Tests
+        uses: gradle/gradle-build-action@v2
+        with:
+          arguments: ${{ matrix.test-type }}Test --continue
+          cache-read-only: ${{ github.ref != 'refs/heads/main' && github.ref != 'refs/heads/master' && github.ref != 'refs/heads/kmp_with_analyze_tools' }}
+
+      - name: Upload Test Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports-${{ matrix.test-type }}
+          path: |
+            **/build/test-results/${{ matrix.test-type }}Test/**
+            **/build/reports/tests/${{ matrix.test-type }}Test/**
+          retention-days: 14
+
+      - name: Upload Coverage Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-reports-${{ matrix.test-type }}
+          path: |
+            **/build/jacoco/${{ matrix.test-type }}Test.exec
+            **/build/reports/jacoco/${{ matrix.test-type }}Test/**
+          retention-days: 14
+
+  sonar:
+    name: SonarCloud Analysis
+    runs-on: ubuntu-latest
+    needs: [lint, test]
+    if: always() && (needs.lint.result == 'success' || needs.test.result == 'success')
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: temurin
+          cache: gradle
+
+      - name: Download Test Reports
+        uses: actions/download-artifact@v4
+        with:
+          name: test-reports-unit
+          path: build/test-results/unitTest
+
+      - name: Download Coverage Reports
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-reports-unit
+          path: build/jacoco
+
+      - name: Run SonarCloud Analysis
+        uses: gradle/gradle-build-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          arguments: |
+            sonar 
+            -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
+            -Dsonar.organization=${{ secrets.SONAR_ORG }}
+            -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }}
+            -Dsonar.junit.reportPaths=build/test-results/unitTest
+            -Dsonar.jacoco.reportPaths=build/jacoco/unitTest.exec
