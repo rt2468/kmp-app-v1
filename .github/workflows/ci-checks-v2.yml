@@ -41,9 +41,10 @@ jobs:
         with:
           gradle-home-cache-cleanup: true
 
+      - name: Grant execute permission for gradlew
+        run: chmod +x ./gradlew
+
       - name: Run KtLint
-        - name: Grant execute permission for gradlew
-          run: chmod +x ./gradlew
         run: ./gradlew ktlintCheck
 
   test:
@@ -62,6 +63,9 @@ jobs:
         uses: gradle/gradle-build-action@v2
         with:
           gradle-home-cache-cleanup: true
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x ./gradlew
 
       - name: Run Unit Tests
         run: ./gradlew allTests
@@ -100,6 +104,9 @@ jobs:
           name: test-reports
           path: .
 
+      - name: Grant execute permission for gradlew
+        run: chmod +x ./gradlew
+
       - name: Run SonarCloud Analysis
         uses: gradle/gradle-build-action@v2
         env:
@@ -108,7 +115,7 @@ jobs:
         with:
           gradle-home-cache-cleanup: true
           arguments: |
-            sonar 
-            -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }} 
-            -Dsonar.organization=${{ secrets.SONAR_ORG }} 
+            sonar
+            -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
+            -Dsonar.organization=${{ secrets.SONAR_ORG }}
             -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }}
