@@ -92,14 +92,6 @@ jobs:
           java-version: ${{ env.JAVA_VERSION }}
           distribution: temurin
 
-      - name: Setup Gradle
-        uses: gradle/gradle-build-action@v2
-        with:
-          gradle-home-cache-cleanup: true
-
-      - name: Make gradlew executable
-        run: chmod +x ./gradlew
-
       - name: Download Test & Coverage Reports
         uses: actions/download-artifact@v4
         with:
@@ -107,11 +99,14 @@ jobs:
           path: .
 
       - name: Run SonarCloud Analysis
+        uses: gradle/gradle-build-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: |
-          ./gradlew sonar \
-            -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }} \
-            -Dsonar.organization=${{ secrets.SONAR_ORG }} \
+        with:
+          gradle-home-cache-cleanup: true
+          arguments: |
+            sonar 
+            -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }} 
+            -Dsonar.organization=${{ secrets.SONAR_ORG }} 
             -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }}
