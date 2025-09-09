@@ -1,10 +1,6 @@
 name: Lint, Test, SQ
 
 on:
-  push:
-    branches: [ main,master, kmp_with_analyze_tools ]
-  pull_request:
-    types: [ opened, synchronize, reopened ]
   workflow_dispatch:
 
 # Optional but recommended: avoid duplicate concurrent runs on the same ref
