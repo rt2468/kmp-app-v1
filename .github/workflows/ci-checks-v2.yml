@@ -42,6 +42,8 @@ jobs:
           gradle-home-cache-cleanup: true
 
       - name: Run KtLint
+        - name: Grant execute permission for gradlew
+          run: chmod +x ./gradlew
         run: ./gradlew ktlintCheck
 
   test:
