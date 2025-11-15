@@ -1,6 +1,9 @@
-name: Android Release Build..
+name: Android Release Build3
 
 on:
+  push:
+    branches:
+      - biweekly_ci
   workflow_dispatch:
 
 jobs:
