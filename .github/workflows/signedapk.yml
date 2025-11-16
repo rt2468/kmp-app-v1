@@ -2,7 +2,9 @@ name: Signed Android Release Build-444
 
 on:
   workflow_dispatch:
-
+  push:
+    branches:
+      - biweekly_ci
 jobs:
   build:
     runs-on: ubuntu-latest
