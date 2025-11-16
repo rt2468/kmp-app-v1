@@ -26,7 +26,7 @@ jobs:
       - name: Decode keystore from secret
         run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > my-release-key.jks
 
-      - name: List files in root directory
+      - name: List files in root directory.
         run: ls -l
 
       - name: Build with Gradle
