@@ -50,6 +50,15 @@ android {
         versionCode = 1
         versionName = "1.0"
     }
+    // ADDED Newly
+    signingConfigs {
+        create("release") {
+            storeFile = rootProject.file("my-release-key.jks")
+            storePassword = System.getenv("KEYSTORE_PASSWORD")
+            keyAlias = System.getenv("KEY_ALIAS")
+            keyPassword = System.getenv("KEY_PASSWORD")
+        }
+    }
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
