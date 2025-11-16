@@ -67,6 +67,7 @@ android {
     buildTypes {
         getByName("release") {
             isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("release")
         }
     }
     compileOptions {
@@ -85,4 +86,3 @@ android {
 dependencies {
     debugImplementation(compose.uiTooling)
 }
-
