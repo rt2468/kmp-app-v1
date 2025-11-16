@@ -1,4 +1,4 @@
-name: Signed Android Release Build-1
+name: Signed Android Release Build-3
 
 on:
   workflow_dispatch:
@@ -26,7 +26,7 @@ jobs:
       - name: Decode keystore from secret
         run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > my-release-key.jks
 
-      - name: List files in root directory.
+      - name: List files in root directory2
         run: ls -l
 
       - name: Build with Gradle
